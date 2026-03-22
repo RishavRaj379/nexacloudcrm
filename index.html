@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexa Cloud — Business Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+[data-theme="dark"]{
+  --bg:#070c18;--bg2:#0b1120;--bg3:#0f172a;
+  --card:#111827;--card2:#162032;
+  --border:#1e2d45;--border2:#243554;
+  --text:#e2eaf8;--text2:#7a8db0;--text3:#3d4f6e;
+  --shadow:rgba(0,0,0,.55);--glow:0 0 40px rgba(14,165,233,.1);
+}
+[data-theme="light"]{
+  --bg:#eef2fb;--bg2:#ffffff;--bg3:#f7f9ff;
+  --card:#ffffff;--card2:#eef2fb;
+  --border:#d8e1f5;--border2:#c4d0ea;
+  --text:#0f172a;--text2:#4a5a7a;--text3:#94a3b8;
+  --shadow:rgba(15,23,42,.12);--glow:0 4px 28px rgba(14,165,233,.08);
+}
+:root{
+  --accent:#0ea5e9;--accent2:#2563eb;
+  --green:#10b981;--red:#ef4444;--orange:#f59e0b;--purple:#8b5cf6;
+  --fh:'Space Grotesk',sans-serif;--fb:'Plus Jakarta Sans',sans-serif;
+  --r:14px;--rs:9px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 15% 0%,rgba(37,99,235,.06) 0%,transparent 60%),radial-gradient(ellipse 55% 40% at 85% 100%,rgba(6,182,212,.05) 0%,transparent 60%);pointer-events:none;z-index:0;}
+[data-theme="light"] body::before{opacity:.4;}
+
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+.app{display:flex;min-height:100vh;position:relative;z-index:1;}
+
+/* SIDEBAR */
+.sidebar{width:250px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .3s,background .3s,border-color .3s;}
+.sb-logo{padding:24px 20px 18px;border-bottom:1px solid var(--border);}
+.sb-logo-row{display:flex;align-items:center;gap:11px;}
+.sb-ico{width:38px;height:38px;background:linear-gradient(135deg,#2563eb,#0ea5e9);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;font-family:var(--fh);color:#fff;box-shadow:0 4px 18px rgba(14,165,233,.38);flex-shrink:0;}
+.sb-name{font-family:var(--fh);font-size:17px;font-weight:700;color:var(--text);}
+.sb-tag{font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;}
+nav{padding:14px 10px;flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
+.nlabel{font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;padding:10px 12px 4px;font-weight:700;}
+.nitem{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--text2);font-size:13.5px;font-weight:500;cursor:pointer;transition:all .18s;border:1px solid transparent;user-select:none;}
+.nitem:hover{color:var(--text);background:rgba(14,165,233,.06);}
+.nitem.active{color:var(--accent);background:rgba(14,165,233,.1);border-color:rgba(14,165,233,.2);font-weight:600;}
+.ni{font-size:15px;width:20px;text-align:center;}
+.nbadge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;min-width:18px;text-align:center;line-height:1.4;}
+.nbadge.b{background:var(--accent);}
+.sb-bottom{padding:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:7px;}
+.mkpi{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;transition:background .3s;}
+.mkpi-l{font-size:11px;color:var(--text3);}
+.mkpi-v{font-family:var(--fh);font-size:15px;font-weight:700;}
+.mkpi-v.g{color:var(--green);}
+.mkpi-v.b{color:var(--accent);}
+
+/* MAIN */
+.main{margin-left:250px;flex:1;display:flex;flex-direction:column;}
+.topbar{background:var(--bg2);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;transition:background .3s,border-color .3s;}
+.tb-left{display:flex;flex-direction:column;gap:2px;}
+.ptitle{font-family:var(--fh);font-size:20px;font-weight:700;color:var(--text);}
+.psub{font-size:11.5px;color:var(--text3);}
+.tb-right{display:flex;align-items:center;gap:9px;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:var(--rs);font-family:var(--fb);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s;white-space:nowrap;}
+.btn-p{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;box-shadow:0 3px 16px rgba(14,165,233,.28);}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(14,165,233,.42);}
+.btn-g{background:var(--card2);color:var(--text2);border:1px solid var(--border);}
+.btn-g:hover{background:var(--border);color:var(--text);}
+.btn-d{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.22);}
+.btn-d:hover{background:rgba(239,68,68,.2);}
+.btn-s{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.22);}
+.btn-s:hover{background:rgba(16,185,129,.2);}
+.sm{padding:6px 11px;font-size:12px;border-radius:8px;}
+.ico{padding:8px;border-radius:8px;}
+.tbtn{width:36px;height:36px;border-radius:9px;background:var(--card2);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .18s;}
+.tbtn:hover{transform:scale(1.08);}
+
+/* PAGES */
+.page{display:none;padding:24px 28px;}
+.page.active{display:block;animation:fu .28s ease;}
+@keyframes fu{from{opacity:0;transform:translateY(9px);}to{opacity:1;transform:translateY(0);}}
+
+/* STAT CARDS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:19px 17px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s,background .3s;}
+.sc:hover{transform:translateY(-2px);box-shadow:var(--glow);}
+.sc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--c1),var(--c2));}
+.sc:nth-child(1){--c1:#2563eb;--c2:#0ea5e9;}
+.sc:nth-child(2){--c1:#10b981;--c2:#06b6d4;}
+.sc:nth-child(3){--c1:#f59e0b;--c2:#f97316;}
+.sc:nth-child(4){--c1:#8b5cf6;--c2:#ec4899;}
+.sc-ico{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:13px;}
+.sc-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-weight:700;}
+.sc-val{font-family:var(--fh);font-size:34px;font-weight:700;color:var(--text);line-height:1;letter-spacing:-1px;}
+.sc-sub{font-size:12px;color:var(--text3);margin-top:5px;}
+.sc-sub.up{color:var(--green);}
+
+/* SECTION HEAD */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;}
+.st{font-family:var(--fh);font-size:15px;font-weight:700;color:var(--text);}
+
+/* FILTER BAR */
+.fb{display:flex;align-items:center;gap:9px;margin-bottom:17px;flex-wrap:wrap;}
+.sw{flex:1;min-width:200px;position:relative;}
+.sw::before{content:'🔍';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:12px;pointer-events:none;}
+.si{width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:9px 13px 9px 33px;color:var(--text);font-family:var(--fb);font-size:13px;outline:none;transition:border-color .18s,background .3s;}
+.si:focus{border-color:var(--accent);}
+.si::placeholder{color:var(--text3);}
+.fc{padding:7px 13px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text2);transition:all .18s;white-space:nowrap;}
+.fc:hover{border-color:var(--accent);color:var(--accent);}
+.fc.on{background:rgba(14,165,233,.1);border-color:rgba(14,165,233,.3);color:var(--accent);}
+
+/* EXCEL TABLE */
+.tw{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:auto;transition:background .3s;}
+.xt{width:100%;border-collapse:collapse;font-size:13px;min-width:900px;}
+.xt th{background:var(--card2);color:var(--text3);font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:12px 13px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;transition:background .3s;}
+.xt td{padding:0;border-bottom:1px solid var(--border);vertical-align:middle;}
+.xt tbody tr:last-child td{border-bottom:none;}
+.xt tbody tr:hover td{background:rgba(14,165,233,.03);}
+.xc{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--fb);font-size:13px;padding:11px 12px;transition:background .12s,box-shadow .12s;}
+.xc:focus{background:rgba(37,99,235,.07);box-shadow:inset 0 0 0 2px rgba(14,165,233,.28);}
+.xc::placeholder{color:var(--text3);}
+.xc[readonly]{cursor:default;color:var(--text3);}
+.xc-num{font-family:var(--fh);font-size:14px;font-weight:600;letter-spacing:-.3px;}
+.pos{color:var(--green)!important;}
+.neg{color:var(--red)!important;}
+.ra{display:flex;gap:3px;padding:0 7px;}
+.rb{width:29px;height:29px;border-radius:7px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .14s;}
+.rb:hover.del{background:rgba(239,68,68,.14);color:var(--red);}
+.rb:hover.ok{background:rgba(16,185,129,.14);color:var(--green);}
+.rb:hover.cb{background:rgba(14,165,233,.14);color:var(--accent);}
+.rb:hover.sc{background:rgba(245,158,11,.14);color:var(--orange);}
+.rb:hover.ed{background:rgba(139,92,246,.14);color:var(--purple);}
+/* New labeled action buttons */
+.ra{display:flex;gap:4px;padding:6px 8px;flex-wrap:nowrap;}
+.ab{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:7px;border:1px solid var(--border);background:var(--card2);color:var(--text2);cursor:pointer;font-size:11px;font-weight:500;font-family:var(--fb);transition:all .15s;white-space:nowrap;}
+.ab-ico{font-size:12px;line-height:1;}
+.ab-lbl{font-size:11px;}
+.ab:hover{transform:translateY(-1px);}
+.ab-script:hover{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3);color:#f59e0b;}
+.ab-sold:hover{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:var(--green);}
+.ab-call:hover{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:var(--green);}
+.ab-cb:hover{background:rgba(14,165,233,.15);border-color:rgba(14,165,233,.3);color:var(--accent);}
+.ab-edit:hover{background:rgba(139,92,246,.15);border-color:rgba(139,92,246,.3);color:var(--purple);}
+.ab-del:hover{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:var(--red);}
+
+/* STATUS BADGES */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
+.bdot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.bpend{background:rgba(245,158,11,.1);color:var(--orange);border:1px solid rgba(245,158,11,.2);}
+.bsold{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.bdecl{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+.bcb{background:rgba(14,165,233,.1);color:var(--accent);border:1px solid rgba(14,165,233,.2);}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(10px);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px;}
+.ov.on{display:flex;animation:fu .2s ease;}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:18px;padding:24px;width:100%;max-width:540px;max-height:93vh;overflow-y:auto;box-shadow:0 28px 70px var(--shadow);animation:su .24s ease;transition:background .3s;}
+.modal-w{max-width:780px;}
+@keyframes su{from{transform:translateY(16px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.mt{font-family:var(--fh);font-size:17px;font-weight:700;}
+.mx{width:29px;height:29px;border-radius:7px;background:var(--card2);border:none;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .14s;}
+.mx:hover{background:rgba(239,68,68,.14);color:var(--red);}
+
+/* FORM */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fgr{display:flex;flex-direction:column;gap:5px;}
+.fgr.full{grid-column:1/-1;}
+.fl{font-size:10.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.fi{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;color:var(--text);font-family:var(--fb);font-size:13.5px;outline:none;transition:border-color .18s,box-shadow .18s,background .3s;width:100%;}
+.fi:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(14,165,233,.1);}
+.fi::placeholder{color:var(--text3);}
+select.fi option{background:var(--bg3);color:var(--text);}
+.fa{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;}
+
+/* PROFIT STRIP */
+.ps{background:linear-gradient(135deg,rgba(37,99,235,.07),rgba(14,165,233,.07));border:1px solid rgba(14,165,233,.14);border-radius:11px;padding:14px;grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;}
+.ps-v{font-family:var(--fh);font-size:23px;font-weight:700;line-height:1;letter-spacing:-.5px;}
+.ps-l{font-size:11px;color:var(--text3);margin-top:3px;}
+
+/* QUICK ACTIONS */
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:22px;}
+.qac{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px 13px;display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:all .22s;}
+.qac:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:var(--glow);}
+.qi{width:37px;height:37px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.qn{font-size:13px;font-weight:700;color:var(--text);font-family:var(--fh);}
+.qd{font-size:11px;color:var(--text3);}
+
+/* ACTIVITY */
+.af{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:background .3s;}
+.ai{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border-bottom:1px solid var(--border);transition:background .15s;}
+.ai:last-child{border-bottom:none;}
+.ai:hover{background:rgba(14,165,233,.02);}
+.aico{width:33px;height:33px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:1px;}
+.atit{font-size:13px;font-weight:500;color:var(--text);}
+.amet{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* CALLBACKS */
+.cbg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.cbc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;transition:all .22s;}
+.cbc:hover{transform:translateY(-2px);}
+.cbc.ov{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.03);}
+.cbc.td{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.03);}
+.cbn{font-weight:700;font-size:14px;font-family:var(--fh);margin-bottom:4px;}
+.cbw{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:4px;}
+.cbnote{font-size:12px;color:var(--text2);margin-top:7px;padding-top:7px;border-top:1px solid var(--border);}
+.cbas{display:flex;gap:6px;margin-top:11px;}
+
+/* BIZFINDER */
+.bf-top{margin-bottom:14px;}
+.bf-key-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:rgba(14,165,233,.05);border:1px solid rgba(14,165,233,.15);border-radius:10px;padding:10px 16px;margin-bottom:12px;color:var(--text2);}
+.bf-search-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.bf-inp{flex:1;min-width:160px;}
+.bf-chips{display:flex;gap:7px;flex-wrap:wrap;}
+.bf-chip{padding:6px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text2);transition:all .2s;}
+.bf-chip:hover,.bf-chip.on{background:rgba(14,165,233,.1);border-color:rgba(14,165,233,.3);color:var(--accent);}
+.bf-layout{display:grid;grid-template-columns:380px 1fr;gap:14px;height:calc(100vh - 260px);min-height:480px;}
+.bf-results-col{display:flex;flex-direction:column;gap:8px;min-width:0;}
+.bf-results-hd{display:flex;align-items:center;padding:6px 2px;}
+.bf-results{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px;padding-right:4px;}
+.bf-results::-webkit-scrollbar{width:4px;}
+.bf-results::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.bf-map-wrap{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--border);}
+.bf-map{width:100%;height:100%;}
+.bf-map-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--card);}
+.bf-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 15px;transition:all .18s;flex-shrink:0;}
+.bf-card:hover{border-color:rgba(14,165,233,.4);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.2);}
+.bf-card.active{border-color:var(--accent);background:rgba(14,165,233,.05);}
+.bf-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:6px;}
+.bf-name{font-weight:700;font-size:13.5px;color:var(--text);line-height:1.3;}
+.bf-rating{font-size:11px;color:var(--orange);white-space:nowrap;}
+.bf-addr{font-size:11.5px;color:var(--text2);margin-bottom:8px;line-height:1.4;}
+.bf-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px;}
+.bf-noweb{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:var(--red);font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;}
+.bf-hasweb{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--green);font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;}
+.bf-open{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--green);font-size:10px;padding:3px 8px;border-radius:5px;}
+.bf-closed{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--red);font-size:10px;padding:3px 8px;border-radius:5px;}
+.bf-actions{display:flex;gap:6px;}
+@media(max-width:900px){.bf-layout{grid-template-columns:1fr;height:auto;}.bf-results{max-height:400px;}.bf-map-wrap{height:300px;}}
+/* DOMAIN */
+.dhero{background:linear-gradient(135deg,rgba(37,99,235,.07),rgba(6,182,212,.07));border:1px solid rgba(14,165,233,.14);border-radius:var(--r);padding:20px;margin-bottom:18px;}
+.dbar{display:flex;gap:9px;margin-bottom:16px;}
+.di{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:11px 15px;color:var(--text);font-family:var(--fh);font-size:15px;outline:none;transition:border-color .18s;}
+.di:focus{border-color:var(--accent);}
+.di::placeholder{color:var(--text3);}
+.drg{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.dc{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;transition:all .2s;}
+.dc.av{border-color:rgba(16,185,129,.28);}
+.dc.tk{border-color:rgba(239,68,68,.18);opacity:.65;}
+.de{font-family:var(--fh);font-size:14px;font-weight:700;}
+.dp{font-family:var(--fh);font-size:16px;font-weight:700;color:var(--accent);}
+.dok{font-size:11px;color:var(--green);font-weight:600;}
+.dno{font-size:11px;color:var(--red);font-weight:600;}
+.hb{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:17px 19px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;transition:background .3s;}
+.hl{display:flex;align-items:center;gap:12px;}
+.hlogo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#674bef,#9b7bfe);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px;font-family:var(--fh);}
+.hi h4{font-size:14px;font-weight:700;font-family:var(--fh);}
+.hi p{font-size:11.5px;color:var(--text3);margin-top:2px;}
+.hki{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:var(--fb);outline:none;width:240px;transition:border-color .18s;}
+.hki:focus{border-color:var(--accent);}
+.hst{font-size:12px;font-weight:600;}
+.hst.ok{color:var(--green);}
+.acr{display:flex;gap:9px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 17px;margin-top:15px;transition:background .3s;}
+
+/* SCRIPT */
+.sl{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start;}
+.sfc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:19px;transition:background .3s;}
+.so{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:19px;min-height:280px;transition:background .3s;}
+.scard{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;overflow:hidden;transition:background .3s;}
+.shd{background:linear-gradient(135deg,var(--accent2),var(--accent));padding:11px 15px;display:flex;align-items:center;justify-content:space-between;}
+.shtit{color:#fff;font-size:11.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--fh);}
+.sbody{padding:2px 0;}
+.sline{display:flex;gap:12px;padding:11px 15px;border-bottom:1px solid var(--border);transition:background .14s;}
+.sline:last-child{border-bottom:none;}
+.sline:hover{background:rgba(14,165,233,.03);}
+.spk{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;min-width:46px;padding-top:2px;flex-shrink:0;}
+.spk.y{color:var(--accent);}
+.spk.t{color:var(--text3);}
+.spk.tip{color:var(--orange);}
+.sl-txt{font-size:13.5px;line-height:1.65;color:var(--text);flex:1;}
+.snote{font-size:12px;color:var(--text3);font-style:italic;margin-top:3px;}
+.sacts{display:flex;gap:8px;margin-top:13px;}
+
+/* SETTINGS */
+.ss{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin-bottom:16px;max-width:600px;transition:background .3s;}
+.ss h3{font-family:var(--fh);font-size:14px;font-weight:700;margin-bottom:15px;display:flex;align-items:center;gap:7px;}
+
+/* TOAST */
+.tw2{position:fixed;bottom:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--card);border:1px solid var(--border2);border-radius:11px;padding:11px 15px;font-size:13px;display:flex;align-items:center;gap:9px;min-width:255px;box-shadow:0 8px 28px var(--shadow);animation:tin .28s ease,tout .28s ease 2.7s forwards;}
+@keyframes tin{from{transform:translateX(110%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+@keyframes tout{to{opacity:0;transform:translateX(110%);}}
+.toast.s{border-color:rgba(16,185,129,.3);}
+.toast.e{border-color:rgba(239,68,68,.3);}
+.toast.i{border-color:rgba(14,165,233,.3);}
+
+/* SPINNER */
+.spin{width:17px;height:17px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:rot .7s linear infinite;flex-shrink:0;}
+@keyframes rot{to{transform:rotate(360deg);}}
+
+/* EMPTY */
+.empty{padding:52px 20px;text-align:center;color:var(--text3);}
+.eico{font-size:42px;margin-bottom:12px;}
+.empty h3{font-family:var(--fh);font-size:17px;color:var(--text2);margin-bottom:6px;}
+.empty p{font-size:13px;}
+
+@media(max-width:1080px){.stats{grid-template-columns:repeat(2,1fr);}.qa{grid-template-columns:repeat(2,1fr);}.drg{grid-template-columns:repeat(2,1fr);}.cbg{grid-template-columns:repeat(2,1fr);}.sl{grid-template-columns:1fr;}}
+@media(max-width:720px){.sidebar{transform:translateX(-100);}.main{margin-left:0;}.stats{grid-template-columns:1fr 1fr;}.fg{grid-template-columns:1fr;}.page{padding:16px 12px;}.topbar{padding:12px 14px;}.sc-val{font-size:28px;}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-row">
+      <div class="sb-ico">N</div>
+      <div><div class="sb-name">Nexa Cloud</div><div class="sb-tag">Business CRM</div></div>
+    </div>
+  </div>
+  <nav>
+    <div class="nlabel">Overview</div>
+    <div class="nitem active" onclick="go('dashboard')"><span class="ni">⚡</span>Dashboard</div>
+    <div class="nlabel">CRM</div>
+    <div class="nitem" onclick="go('clients')"><span class="ni">🏢</span>Clients<span class="nbadge" id="nb1" style="display:none"></span></div>
+    <div class="nitem" onclick="go('callbacks')"><span class="ni">📞</span>Callbacks<span class="nbadge b" id="nb2" style="display:none"></span></div>
+    <div class="nlabel">Tools</div>
+    <div class="nitem" onclick="go('domains')"><span class="ni">🌐</span>Domain Finder</div>
+    <div class="nitem" onclick="go('script')"><span class="ni">🤖</span>AI Call Script</div>
+    <div class="nitem" onclick="go('bizfinder')"><span class="ni">📍</span>Business Finder</div>
+    <div class="nlabel">Config</div>
+    <div class="nitem" onclick="go('settings')"><span class="ni">⚙️</span>Settings</div>
+  </nav>
+  <div class="sb-bottom">
+    <div class="mkpi"><div class="mkpi-l">Total Revenue</div><div class="mkpi-v b" id="sbr">₹0</div></div>
+    <div class="mkpi"><div class="mkpi-l">Net Profit</div><div class="mkpi-v g" id="sbp">₹0</div></div>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="tb-left"><div class="ptitle" id="ptit">Dashboard</div><div class="psub" id="psub">Welcome back</div></div>
+    <div class="tb-right">
+      <button class="tbtn" onclick="toggleTheme()" id="tbtn" title="Toggle theme">☀️</button>
+      <button class="btn btn-g sm" onclick="go('domains')">🌐 Domain</button>
+      <button class="btn btn-p" onclick="openAdd()">＋ Add Client</button>
+    </div>
+  </header>
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="stats">
+      <div class="sc"><div class="sc-ico" style="background:rgba(37,99,235,.11);color:#2563eb">🏢</div><div class="sc-lbl">Total Clients</div><div class="sc-val" id="ds0">0</div><div class="sc-sub" id="ds0s">All time</div></div>
+      <div class="sc"><div class="sc-ico" style="background:rgba(16,185,129,.11);color:#10b981">💰</div><div class="sc-lbl">Converted</div><div class="sc-val" id="ds1">0</div><div class="sc-sub up" id="ds1s">Sold</div></div>
+      <div class="sc"><div class="sc-ico" style="background:rgba(245,158,11,.11);color:#f59e0b">⏳</div><div class="sc-lbl">Pending</div><div class="sc-val" id="ds2">0</div><div class="sc-sub" id="ds2s">Pipeline</div></div>
+      <div class="sc"><div class="sc-ico" style="background:rgba(139,92,246,.11);color:#8b5cf6">📞</div><div class="sc-lbl">Callbacks</div><div class="sc-val" id="ds3">0</div><div class="sc-sub">Scheduled</div></div>
+    </div>
+    <div class="qa">
+      <div class="qac" onclick="openAdd()"><div class="qi" style="background:rgba(37,99,235,.11);color:#2563eb">➕</div><div class="qn">Add Client</div><div class="qd">Log a new prospect</div></div>
+      <div class="qac" onclick="go('script')"><div class="qi" style="background:rgba(245,158,11,.11);color:#f59e0b">🤖</div><div class="qn">AI Script</div><div class="qd">Generate call pitch</div></div>
+      <div class="qac" onclick="go('domains')"><div class="qi" style="background:rgba(16,185,129,.11);color:#10b981">🌐</div><div class="qn">Domain Finder</div><div class="qd">Hostinger prices</div></div>
+      <div class="qac" onclick="go('callbacks')"><div class="qi" style="background:rgba(139,92,246,.11);color:#8b5cf6">📞</div><div class="qn">Callbacks</div><div class="qd">Manage follow-ups</div></div>
+    </div>
+    <div class="sh"><div class="st">Recent Activity</div></div>
+    <div class="af" id="act-feed"><div class="empty"><div class="eico">📭</div><h3>No activity yet</h3><p>Add your first client</p></div></div>
+  </div>
+
+  <!-- CLIENTS -->
+  <div class="page" id="page-clients">
+    <div class="fb">
+      <div class="sw"><input class="si" id="cl-q" placeholder="Search name, phone, category…" oninput="renderClients()"></div>
+      <div class="fc on" onclick="setF('all',this)">All</div>
+      <div class="fc" onclick="setF('pending',this)">⏳ Pending</div>
+      <div class="fc" onclick="setF('sold',this)">✅ Sold</div>
+      <div class="fc" onclick="setF('declined',this)">❌ Declined</div>
+      <div class="fc" onclick="setF('callback',this)">📞 Callback</div>
+    </div>
+    <div class="tw">
+      <table class="xt">
+        <thead><tr>
+          <th style="width:40px">#</th><th>Business Name</th><th>Category</th><th>Phone</th>
+          <th>Expense (₹)</th><th>Price (₹)</th><th>Final (₹)</th><th>Profit</th><th>Status</th><th style="width:155px">Actions</th>
+        </tr></thead>
+        <tbody id="cltb"></tbody>
+      </table>
+      <div id="clem" class="empty" style="display:none"><div class="eico">🏢</div><h3>No clients</h3><p>Add one or change filter</p></div>
+    </div>
+  </div>
+
+  <!-- CALLBACKS -->
+  <div class="page" id="page-callbacks">
+    <div class="sh"><div class="st">📞 Scheduled Callbacks</div><button class="btn btn-p sm" onclick="openCbM()">＋ Schedule</button></div>
+    <div class="fb">
+      <div class="fc on" onclick="setCbF('all',this)">All</div>
+      <div class="fc" onclick="setCbF('overdue',this)">🔴 Overdue</div>
+      <div class="fc" onclick="setCbF('today',this)">🟡 Today</div>
+      <div class="fc" onclick="setCbF('upcoming',this)">🟢 Upcoming</div>
+    </div>
+    <div class="cbg" id="cbg"><div class="empty" style="grid-column:1/-1"><div class="eico">📞</div><h3>All clear!</h3><p>No callbacks scheduled</p></div></div>
+  </div>
+
+  <!-- DOMAINS -->
+  <div class="page" id="page-domains">
+    <div class="hb">
+      <div class="hl"><div class="hlogo">W</div><div class="hi"><h4>Domain Availability Checker</h4><p id="hgtxt">Paste your free <strong>WhoisJSON</strong> API key for live availability checks — <a href="https://whoisjson.com/" target="_blank" style="color:var(--accent)">get free key (no card needed) →</a></p></div></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <input class="hki" id="hgk" type="password" placeholder="Paste WhoisJSON API key (free, 1000/month)…" oninput="saveApiKey()">
+        <span id="hgst" class="hst"></span>
+      </div>
+    </div>
+    <div class="dhero">
+      <div class="dbar">
+        <input class="di" id="din" placeholder="e.g.  arbl  or  rajsalon" onkeydown="if(event.key==='Enter')searchDomain()">
+        <button class="btn btn-p" onclick="searchDomain()" id="dbtn">🔍 Check Availability</button>
+      </div>
+      <div id="drg" class="drg"></div>
+    </div>
+    <div id="dacr" class="acr" style="display:none">
+      <span style="font-size:13px;font-weight:600;color:var(--text2);white-space:nowrap">📌 Add Domain Cost to Client</span>
+      <select class="fi" id="dcs" style="flex:1;min-width:160px;background:var(--bg3)"></select>
+      <input class="fi" id="dcv" type="number" placeholder="Amount (₹)" style="width:135px;background:var(--bg3)">
+      <button class="btn btn-s sm" onclick="addDomCost()">✅ Add to Expense</button>
+    </div>
+  </div>
+
+  <!-- BIZFINDER -->
+  <div class="page" id="page-bizfinder">
+    <div class="bf-top">
+      <div class="bf-key-row">
+        <span style="font-size:13px">🗺️ <strong>100% Free</strong> — Uses OpenStreetMap data. No API key, no credit card needed.</span>
+        <span style="font-size:12px;color:var(--text3)">🔴 No website = pitch target &nbsp;|&nbsp; 🌐 Has website = skip</span>
+      </div>
+      <div class="bf-search-row">
+        <input class="fi bf-inp" id="bf-query" type="text" placeholder="e.g. Beauty Salon, Restaurant, Gym…" onkeydown="if(event.key==='Enter')searchBiz()">
+        <input class="fi bf-inp" id="bf-loc" type="text" placeholder="City or area e.g. Kolkata" onkeydown="if(event.key==='Enter')searchBiz()" style="max-width:210px">
+        <button class="btn btn-p" onclick="searchBiz()" id="bf-btn">🔍 Find Businesses</button>
+      </div>
+      <div class="bf-chips">
+        <div class="fc bf-chip" onclick="quickBiz('Beauty Salon',this)">💇 Salons</div>
+        <div class="fc bf-chip" onclick="quickBiz('Restaurant',this)">🍽️ Restaurants</div>
+        <div class="fc bf-chip" onclick="quickBiz('Gym',this)">💪 Gyms</div>
+        <div class="fc bf-chip" onclick="quickBiz('Dental Clinic',this)">🦷 Dentists</div>
+        <div class="fc bf-chip" onclick="quickBiz('Boutique',this)">👗 Boutiques</div>
+        <div class="fc bf-chip" onclick="quickBiz('Bakery',this)">🥐 Bakeries</div>
+        <div class="fc bf-chip" onclick="quickBiz('Coaching',this)">📚 Coaching</div>
+        <div class="fc bf-chip" onclick="quickBiz('Photographer',this)">📸 Photographers</div>
+      </div>
+    </div>
+    <div class="bf-layout">
+      <div class="bf-results-col">
+        <div class="bf-results-hd" id="bf-results-hd" style="display:none">
+          <span id="bf-count" style="font-size:13px;font-weight:600;color:var(--text)"></span>
+          <span style="font-size:11px;color:var(--text3);margin-left:6px">🔴 No website = pitch opportunity</span>
+        </div>
+        <div class="bf-results" id="bf-results">
+          <div class="empty"><div class="eico">📍</div><h3>Find businesses without websites</h3><p>Enter a category + city and search. Businesses with no website are your pitch targets.</p></div>
+        </div>
+      </div>
+      <div class="bf-map-wrap">
+        <iframe id="bf-gmap" class="bf-map" style="border:none" allowfullscreen loading="lazy" src="about:blank"></iframe>
+        <div class="bf-map-placeholder" id="bf-map-ph">
+          <span style="font-size:36px">🗺️</span>
+          <p style="margin-top:8px;font-size:13px;color:var(--text3)">Map loads after search</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <div class="page" id="page-script">
+    <div class="sl">
+      <div class="sfc">
+        <div class="st" style="margin-bottom:15px">🤖 Script Generator</div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <div class="fgr"><label class="fl">Business Name *</label><input class="fi" id="sb" placeholder="e.g. Raj Beauty Salon"></div>
+          <div class="fgr"><label class="fl">Category *</label><input class="fi" id="sc2" placeholder="Salon, Restaurant, Gym…"></div>
+          <div class="fgr"><label class="fl">Location</label><input class="fi" id="sloc" placeholder="e.g. Kolkata, Mumbai"></div>
+          <div class="fgr"><label class="fl">Your Name / Company</label><input class="fi" id="syou" value="Nexa Cloud"></div>
+          <div class="fgr"><label class="fl">Budget Range</label><input class="fi" id="sbud" placeholder="e.g. ₹3,000 – ₹8,000"></div>
+          <div class="fgr"><label class="fl">Tone</label>
+            <select class="fi" id="stone">
+              <option value="friendly">Friendly & Casual</option>
+              <option value="professional">Professional</option>
+              <option value="urgent">Create Urgency</option>
+            </select>
+          </div>
+          <div class="fgr"><label class="fl">Language</label>
+            <select class="fi" id="slang">
+              <option value="english">English</option>
+              <option value="hinglish">Hinglish</option>
+              <option value="hindi">Hindi</option>
+              <option value="bengali">Bengali</option>
+            </select>
+          </div>
+          <button class="btn btn-p" onclick="genScript()" style="width:100%;justify-content:center">✨ Generate Script</button>
+        </div>
+      </div>
+      <div class="so" id="sout"><div class="empty"><div class="eico">🤖</div><h3>Script appears here</h3><p>Fill in details and click Generate</p></div></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="ss">
+      <h3>🔥 Firebase Database</h3>
+      <div class="fgr" style="margin-bottom:12px"><label class="fl">Firebase Config JSON</label><textarea class="fi" id="fbcfg" rows="8" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea><div style="font-size:11px;color:var(--text3);margin-top:3px">Get from Firebase Console → Project Settings → Your Apps</div></div>
+      <div style="display:flex;gap:8px;align-items:center"><button class="btn btn-p sm" onclick="saveFb()">💾 Connect</button><span id="fbst" style="font-size:12px;color:var(--text3)"></span></div>
+    </div>
+    <div class="ss">
+      <h3>⚙️ General</h3>
+      <div class="fg" style="margin-bottom:12px">
+        <div class="fgr"><label class="fl">Your Name</label><input class="fi" id="stn" placeholder="e.g. Rohan"></div>
+        <div class="fgr"><label class="fl">Currency</label><input class="fi" id="stc" value="₹"></div>
+      </div>
+      <button class="btn btn-g sm" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- ADD/EDIT CLIENT MODAL -->
+<div class="ov" id="mc"><div class="modal">
+  <div class="mh"><div class="mt" id="mct">🏢 Add Client</div><button class="mx" onclick="closeM('mc')">✕</button></div>
+  <div class="fg">
+    <div class="fgr full"><label class="fl">Business Name *</label><input class="fi" id="cn" placeholder="e.g. Raj Beauty Salon"></div>
+    <div class="fgr"><label class="fl">Category *</label><input class="fi" id="cc" placeholder="Salon, Restaurant…"></div>
+    <div class="fgr"><label class="fl">Phone *</label><input class="fi" id="cp" type="tel" placeholder="+91 9999999999"></div>
+    <div class="fgr"><label class="fl">Location</label><input class="fi" id="cl" placeholder="City / Area"></div>
+    <div class="fgr"><label class="fl">Expense / Domain (₹)</label><input class="fi" id="ce" type="number" placeholder="0" oninput="calcP()"></div>
+    <div class="fgr"><label class="fl">Quoted Price (₹)</label><input class="fi" id="cpr" type="number" placeholder="0" oninput="calcP()"></div>
+    <div class="fgr"><label class="fl">Final / Negotiated (₹)</label><input class="fi" id="cf" type="number" placeholder="0" oninput="calcP()"></div>
+    <div class="fgr"><label class="fl">Status</label><select class="fi" id="cst"><option value="pending">⏳ Pending</option><option value="sold">✅ Sold</option><option value="declined">❌ Declined</option><option value="callback">📞 Callback</option></select></div>
+    <div class="fgr full"><label class="fl">Notes</label><input class="fi" id="cno" placeholder="Any important notes…"></div>
+    <div class="ps">
+      <div><div class="ps-v" id="psv1" style="color:var(--red)">₹0</div><div class="ps-l">Expense</div></div>
+      <div><div class="ps-v" id="psv2" style="color:var(--accent)">₹0</div><div class="ps-l">Final Price</div></div>
+      <div><div class="ps-v" id="psv3" style="color:var(--green)">₹0</div><div class="ps-l">Profit</div></div>
+    </div>
+  </div>
+  <div class="fa"><button class="btn btn-g sm" onclick="closeM('mc')">Cancel</button><button class="btn btn-p sm" onclick="saveClient()">💾 Save</button></div>
+</div></div>
+
+<!-- CALLBACK MODAL -->
+<div class="ov" id="mcb"><div class="modal">
+  <div class="mh"><div class="mt">📞 Schedule Callback</div><button class="mx" onclick="closeM('mcb')">✕</button></div>
+  <div class="fg">
+    <div class="fgr full"><label class="fl">Select Client</label><select class="fi" id="cbc"></select></div>
+    <div class="fgr full"><label class="fl">Or enter manually</label><input class="fi" id="cbm" placeholder="Business name (if not in list)"></div>
+    <div class="fgr"><label class="fl">Date *</label><input class="fi" id="cbd" type="date"></div>
+    <div class="fgr"><label class="fl">Time</label><input class="fi" id="cbt" type="time" value="10:00"></div>
+    <div class="fgr"><label class="fl">Phone</label><input class="fi" id="cbph" type="tel" placeholder="+91…"></div>
+    <div class="fgr"><label class="fl">Priority</label><select class="fi" id="cbpr"><option value="normal">Normal</option><option value="high">🔴 High</option><option value="low">Low</option></select></div>
+    <div class="fgr full"><label class="fl">Reason / Note</label><input class="fi" id="cbn2" placeholder="e.g. Owner busy, call tomorrow 3pm"></div>
+  </div>
+  <div class="fa"><button class="btn btn-g sm" onclick="closeM('mcb')">Cancel</button><button class="btn btn-p sm" onclick="saveCb()">📞 Schedule</button></div>
+</div></div>
+
+<div class="tw2" id="twrap"></div>
+
+<script>
+let clients=[],callbacks=[],activities=[],db=null,editId=null,filter='all',cbF='all',hgKey='',theme='dark';
+let appS={name:'',currency:'₹'};
+
+// THEME
+function toggleTheme(){
+  theme=theme==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',theme);
+  document.getElementById('tbtn').textContent=theme==='dark'?'☀️':'🌙';
+  localStorage.setItem('nc_theme',theme);
+}
+
+// NAV
+const PI={dashboard:['Dashboard',"Welcome back — here's your overview"],clients:['Client Manager','Click any cell to edit inline'],callbacks:['Callbacks','Never miss a follow-up'],domains:['Domain Finder','Real-time prices via Hostinger'],script:['AI Call Script','Generate a personalised pitch'],bizfinder:['Business Finder','Find local businesses without websites on Google Maps'],settings:['Settings','Firebase & preferences']};
+function go(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nitem').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nitem').forEach(x=>{if((x.getAttribute('onclick')||'').includes("'"+p+"'"))x.classList.add('active');});
+  const[t,s]=PI[p]||[p,''];
+  document.getElementById('ptit').textContent=t;
+  document.getElementById('psub').textContent=s;
+  if(p==='dashboard')renderDash();
+  if(p==='clients')renderClients();
+  if(p==='callbacks')renderCbs();
+  if(p==='domains')fillDCS();
+  if(p==='bizfinder'){var loc=document.getElementById('bf-loc');if(loc&&!loc.value&&appS&&appS.city)loc.value=appS.city;}
+}
+
+// MODALS
+function openM(id){document.getElementById(id).classList.add('on');}
+function closeM(id){document.getElementById(id).classList.remove('on');if(id==='mc')resetF();}
+function openAdd(){editId=null;resetF();document.getElementById('mct').textContent='🏢 Add Client';openM('mc');}
+function openEdit(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;editId=id;
+  document.getElementById('mct').textContent='✏️ Edit Client';
+  document.getElementById('cn').value=c.name||'';
+  document.getElementById('cc').value=c.category||'';
+  document.getElementById('cp').value=c.phone||'';
+  document.getElementById('cl').value=c.location||'';
+  document.getElementById('ce').value=c.expense||'';
+  document.getElementById('cpr').value=c.price||'';
+  document.getElementById('cf').value=c.finalPrice||'';
+  document.getElementById('cst').value=c.status||'pending';
+  document.getElementById('cno').value=c.notes||'';
+  calcP();openM('mc');
+}
+function openCbM(cid){
+  fillCbSel();
+  if(cid){document.getElementById('cbc').value=cid;const c=clients.find(x=>x.id===cid);if(c)document.getElementById('cbph').value=c.phone||'';}
+  const t=new Date();t.setDate(t.getDate()+1);document.getElementById('cbd').value=t.toISOString().split('T')[0];
+  openM('mcb');
+}
+function resetF(){['cn','cc','cp','cl','ce','cpr','cf','cno'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});const s=document.getElementById('cst');if(s)s.value='pending';calcP();}
+
+// PROFIT CALC
+function calcP(){
+  const e=parseFloat(document.getElementById('ce')?.value)||0;
+  const p=parseFloat(document.getElementById('cpr')?.value)||0;
+  const f=parseFloat(document.getElementById('cf')?.value)||0;
+  const eff=f||p,prof=eff-e,cu=appS.currency;
+  document.getElementById('psv1').textContent=cu+fmt(e);
+  document.getElementById('psv2').textContent=cu+fmt(eff);
+  document.getElementById('psv3').textContent=cu+fmt(prof);
+  document.getElementById('psv3').style.color=prof>=0?'var(--green)':'var(--red)';
+}
+function fmt(n){return Number(n||0).toLocaleString('en-IN');}
+
+// CLIENT CRUD
+async function saveClient(){
+  const name=document.getElementById('cn').value.trim();
+  if(!name){toast('Business name required','e');return;}
+  const e=parseFloat(document.getElementById('ce').value)||0;
+  const p=parseFloat(document.getElementById('cpr').value)||0;
+  const f=parseFloat(document.getElementById('cf').value)||0;
+  const c={name,category:document.getElementById('cc').value.trim(),phone:document.getElementById('cp').value.trim(),location:document.getElementById('cl').value.trim(),expense:e,price:p,finalPrice:f,status:document.getElementById('cst').value,notes:document.getElementById('cno').value.trim(),profit:(f||p)-e,updatedAt:Date.now(),createdAt:editId?(clients.find(x=>x.id===editId)?.createdAt||Date.now()):Date.now()};
+  if(editId){c.id=editId;const i=clients.findIndex(x=>x.id===editId);if(i!==-1)clients[i]=c;await dbS('clients',c);log('✏️','Updated '+name,c.category);toast(name+' updated ✅','s');}
+  else{const id=await dbS('clients',c);c.id=id||'l_'+Date.now();clients.push(c);log('🏢','Added '+name,c.category);toast(name+' added 🎉','s');}
+  if(!db)sl();closeM('mc');renderAll();
+}
+async function delClient(id){
+  if(!confirm('Delete this client?'))return;
+  const c=clients.find(x=>x.id===id);
+  clients=clients.filter(x=>x.id!==id);await dbD('clients',id);if(!db)sl();
+  if(c)log('🗑️','Removed '+c.name,'Deleted');toast('Deleted','i');renderAll();
+}
+async function setStat(id,status){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  c.status=status;c.updatedAt=Date.now();await dbS('clients',c);if(!db)sl();
+  log(status==='sold'?'💰':'📋',c.name+' → '+status,c.category);
+  toast({sold:'✅ Marked Sold',declined:'❌ Declined',pending:'⏳ Pending',callback:'📞 Callback'}[status]||'Updated','s');renderAll();
+}
+const _t={};
+function cellChg(id,field,val){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  if(['expense','price','finalPrice'].includes(field))c[field]=parseFloat(val)||0;else c[field]=val;
+  c.profit=(c.finalPrice||c.price)-c.expense;c.updatedAt=Date.now();
+  clearTimeout(_t[id]);
+  _t[id]=setTimeout(async()=>{await dbS('clients',c);if(!db)sl();updateSb();},900);
+}
+
+// RENDER CLIENTS
+function renderClients(){
+  const q=(document.getElementById('cl-q')?.value||'').toLowerCase();
+  const list=clients.filter(c=>{const mf=filter==='all'||c.status===filter;const mq=!q||c.name.toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.category||'').toLowerCase().includes(q);return mf&&mq;});
+  const tb=document.getElementById('cltb');const em=document.getElementById('clem');
+  if(!list.length){tb.innerHTML='';em.style.display='block';return;}em.style.display='none';
+  const cu=appS.currency;
+  const bm={pending:`<span class="badge bpend"><span class="bdot"></span>Pending</span>`,sold:`<span class="badge bsold"><span class="bdot"></span>Sold</span>`,declined:`<span class="badge bdecl"><span class="bdot"></span>Declined</span>`,callback:`<span class="badge bcb"><span class="bdot"></span>Callback</span>`};
+  tb.innerHTML=list.map((c,i)=>{
+    const pr=(c.finalPrice||c.price)-c.expense;const pc=pr>=0?'pos':'neg';
+    return`<tr>
+      <td><input class="xc" value="${i+1}" readonly style="width:40px;text-align:center"></td>
+      <td><input class="xc" value="${esc(c.name)}" onchange="cellChg('${c.id}','name',this.value)"></td>
+      <td><input class="xc" value="${esc(c.category||'')}" onchange="cellChg('${c.id}','category',this.value)" style="min-width:110px"></td>
+      <td><input class="xc" value="${esc(c.phone||'')}" onchange="cellChg('${c.id}','phone',this.value)" style="min-width:125px"></td>
+      <td><input class="xc xc-num neg" type="number" value="${c.expense||0}" onchange="cellChg('${c.id}','expense',this.value)" style="min-width:85px"></td>
+      <td><input class="xc xc-num" type="number" value="${c.price||0}" onchange="cellChg('${c.id}','price',this.value)" style="min-width:85px;color:var(--accent)"></td>
+      <td><input class="xc xc-num" type="number" value="${c.finalPrice||0}" onchange="cellChg('${c.id}','finalPrice',this.value)" style="min-width:85px"></td>
+      <td style="padding:0 12px;white-space:nowrap"><span class="xc-num ${pc}">${cu}${fmt(pr)}</span></td>
+      <td style="padding:0 9px">${bm[c.status]||''}</td>
+      <td><div class="ra">
+        <button class="ab ab-script" onclick="qScript('${c.id}')"><span class="ab-ico">🤖</span><span class="ab-lbl">Script</span></button>
+        <button class="ab ab-sold" onclick="setStat('${c.id}','sold')"><span class="ab-ico">✅</span><span class="ab-lbl">Sold</span></button>
+        <button class="ab ab-call" onclick="dialClient('${c.id}')"><span class="ab-ico">📞</span><span class="ab-lbl">Call</span></button>
+        <button class="ab ab-cb" onclick="openCbM('${c.id}')"><span class="ab-ico">🔔</span><span class="ab-lbl">Callback</span></button>
+        <button class="ab ab-edit" onclick="openEdit('${c.id}')"><span class="ab-ico">✏️</span><span class="ab-lbl">Edit</span></button>
+        <button class="ab ab-del" onclick="delClient('${c.id}')"><span class="ab-ico">🗑️</span><span class="ab-lbl">Delete</span></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+function setF(f,el){filter=f;document.querySelectorAll('#page-clients .fc').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderClients();}
+
+// CALLBACKS
+async function saveCb(){
+  const cid=document.getElementById('cbc').value;const manual=document.getElementById('cbm').value.trim();
+  const date=document.getElementById('cbd').value;if(!date){toast('Pick a date','e');return;}
+  let biz=manual;if(cid){const c=clients.find(x=>x.id===cid);if(c)biz=c.name;}
+  if(!biz){toast('Select client or enter name','e');return;}
+  const cb={clientId:cid||null,businessName:biz,phone:document.getElementById('cbph').value.trim(),date,time:document.getElementById('cbt').value,note:document.getElementById('cbn2').value.trim(),priority:document.getElementById('cbpr').value,done:false,createdAt:Date.now()};
+  const id=await dbS('callbacks',cb);cb.id=id||'lcb_'+Date.now();callbacks.push(cb);if(!db)sl();
+  log('📞','Callback for '+biz,date);toast('Callback scheduled 📞','s');closeM('mcb');renderAll();
+}
+async function cbDone(id){const c=callbacks.find(x=>x.id===id);if(!c)return;c.done=true;await dbS('callbacks',c);if(!db)sl();toast('Done ✅','s');renderAll();}
+async function cbDel(id){callbacks=callbacks.filter(x=>x.id!==id);await dbD('callbacks',id);if(!db)sl();renderAll();}
+function renderCbs(){
+  const today=new Date().toISOString().split('T')[0];
+  let list=callbacks.filter(c=>!c.done);
+  if(cbF==='overdue')list=list.filter(c=>c.date<today);
+  if(cbF==='today')list=list.filter(c=>c.date===today);
+  if(cbF==='upcoming')list=list.filter(c=>c.date>today);
+  const g=document.getElementById('cbg');
+  if(!list.length){g.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="eico">📞</div><h3>All clear!</h3><p>No callbacks in this filter</p></div>`;return;}
+  g.innerHTML=list.sort((a,b)=>a.date>b.date?1:-1).map(cb=>{
+    const ov=cb.date<today,td=cb.date===today,cls=ov?'ov':td?'td':'';
+    const lbl=ov?'🔴 Overdue':td?'🟡 Today':'🟢 '+cb.date;
+    const pc={high:'var(--red)',normal:'var(--accent)',low:'var(--text3)'}[cb.priority];
+    return`<div class="cbc ${cls}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="cbn">${esc(cb.businessName)}</div>
+        <span style="font-size:10px;font-weight:800;color:${pc};letter-spacing:1px">${cb.priority.toUpperCase()}</span>
+      </div>
+      <div class="cbw">📅 ${lbl}${cb.time?'  ⏰ '+cb.time:''}</div>
+      ${cb.phone?`<div class="cbw" style="margin-top:3px">📱 ${esc(cb.phone)}</div>`:''}
+      ${cb.note?`<div class="cbnote">${esc(cb.note)}</div>`:''}
+      <div class="cbas">
+        <button class="btn btn-s sm" style="flex:1" onclick="cbDone('${cb.id}')">✅ Done</button>
+        ${cb.phone?`<a class="btn btn-g sm" href="tel:${cb.phone}">📞</a>`:''}
+        <button class="btn btn-d sm ico" onclick="cbDel('${cb.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function setCbF(f,el){cbF=f;document.querySelectorAll('#page-callbacks .fc').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderCbs();}
+function fillCbSel(){document.getElementById('cbc').innerHTML='<option value="">— select client —</option>'+clients.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');}
+
+// BIZFINDER — Overpass API for business list + Google Maps embed (both free, no key)
+var bfPlaces = [];
+
+// Category → OSM tags mapping
+var OSM_TAGS = {
+  'Beauty Salon':  [['shop','beauty'],['shop','hairdresser']],
+  'Restaurant':    [['amenity','restaurant'],['amenity','fast_food']],
+  'Gym':           [['leisure','fitness_centre']],
+  'Dental Clinic': [['amenity','dentist']],
+  'Boutique':      [['shop','clothes']],
+  'Bakery':        [['shop','bakery']],
+  'Coaching':      [['amenity','school'],['amenity','college']],
+  'Photographer':  [['shop','photography']],
+  'Hospital':      [['amenity','hospital'],['amenity','clinic']],
+  'Pharmacy':      [['amenity','pharmacy']],
+  'Hotel':         [['tourism','hotel'],['tourism','guest_house']],
+  'Grocery':       [['shop','supermarket'],['shop','convenience']],
+  'Jewellery':     [['shop','jewelry'],['shop','jewellery']],
+  'Electronics':   [['shop','electronics'],['shop','mobile_phone']],
+  'Cafe':          [['amenity','cafe']]
+};
+
+function quickBiz(cat, el){
+  document.getElementById('bf-query').value = cat;
+  document.querySelectorAll('.bf-chip').forEach(function(x){ x.classList.remove('on'); });
+  el.classList.add('on');
+  searchBiz();
+}
+
+function updateGoogleMapEmbed(query, loc){
+  var iframe = document.getElementById('bf-gmap');
+  var ph     = document.getElementById('bf-map-ph');
+  var q      = encodeURIComponent(query + ' ' + loc);
+  // Google Maps embed — completely free, no API key
+  iframe.src = 'https://maps.google.com/maps?q=' + q + '&output=embed&hl=en&z=13';
+  ph.style.display = 'none';
+}
+
+async function searchBiz(){
+  var query = document.getElementById('bf-query').value.trim();
+  var loc   = document.getElementById('bf-loc').value.trim();
+  if(!query){ toast('Enter a business category','e'); return; }
+  if(!loc)  { toast('Enter a city or area','e'); return; }
+
+  var btn = document.getElementById('bf-btn');
+  btn.innerHTML = '<span class="spin"></span> Searching…';
+  btn.disabled  = true;
+
+  var resultsEl = document.getElementById('bf-results');
+  resultsEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)"><div class="spin" style="margin:0 auto 12px"></div>Finding businesses in ' + esc(loc) + '…</div>';
+
+  // Always update Google Maps embed immediately
+  updateGoogleMapEmbed(query, loc);
+
+  try {
+    // Geocode city using Nominatim (free)
+    var geoRes  = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(loc), { headers:{'Accept-Language':'en'} });
+    var geoData = await geoRes.json();
+    if(!geoData.length){
+      toast('Location not found — try a different city name','e');
+      btn.innerHTML='🔍 Find Businesses'; btn.disabled=false; return;
+    }
+    var lat = parseFloat(geoData[0].lat);
+    var lon = parseFloat(geoData[0].lon);
+
+    // Build Overpass query
+    var tags = OSM_TAGS[query] || [['name', query]];
+    var tagFilters = tags.map(function(t){
+      return 'node["'+t[0]+'"="'+t[1]+'"](around:10000,'+lat+','+lon+');';
+    }).join('\n  ');
+    var overpassQ = '[out:json][timeout:25];\n(\n  ' + tagFilters + '\n);\nout body 60;';
+
+    var ovRes  = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(overpassQ) });
+    var ovData = await ovRes.json();
+    var elements = (ovData.elements || []).filter(function(e){ return e.tags && e.tags.name; });
+
+    if(!elements.length){
+      resultsEl.innerHTML = '<div class="empty"><div class="eico">🔍</div><h3>No results found</h3><p>Try a broader category like "Restaurant" or "Pharmacy", or check the city name. The map on the right shows Google results.</p></div>';
+      btn.innerHTML='🔍 Find Businesses'; btn.disabled=false; return;
+    }
+
+    bfPlaces = elements;
+    renderBfResults(elements, query, loc);
+    var noWeb = elements.filter(function(e){ return !e.tags.website; }).length;
+    document.getElementById('bf-results-hd').style.display = 'flex';
+    document.getElementById('bf-count').textContent = elements.length + ' found · ' + noWeb + ' with no website';
+
+  } catch(err) {
+    console.error(err);
+    resultsEl.innerHTML = '<div class="empty"><div class="eico">😕</div><h3>Error</h3><p>'+esc(String(err))+'</p></div>';
+  }
+  btn.innerHTML = '🔍 Find Businesses';
+  btn.disabled  = false;
+}
+
+function renderBfResults(elements, query, loc){
+  var resultsEl = document.getElementById('bf-results');
+  resultsEl.innerHTML = elements.map(function(e, i){
+    var t       = e.tags;
+    var hasWeb  = !!t.website;
+    var phone   = t.phone || t['contact:phone'] || '';
+    var addr    = [t['addr:housenumber'], t['addr:street'], t['addr:city']].filter(Boolean).join(', ');
+    var opening = t.opening_hours || '';
+    // Build Google Business search URL — searches Google Maps for exact name + location
+    var googleUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(t.name + ' ' + (addr || loc));
+    return '<div class="bf-card" data-bf="'+i+'">'
+      + '<div class="bf-card-top">'
+        + '<div class="bf-name">'+esc(t.name)+'</div>'
+        + (hasWeb ? '<span class="bf-hasweb">🌐 Has Website</span>' : '<span class="bf-noweb">🚫 No Website</span>')
+      + '</div>'
+      + (addr    ? '<div class="bf-addr">📍 '+esc(addr)+'</div>' : '')
+      + (phone   ? '<div class="bf-addr">📞 '+esc(phone)+'</div>' : '')
+      + (opening ? '<div class="bf-addr" style="font-size:11px">🕐 '+esc(opening)+'</div>' : '')
+      + '<div class="bf-actions" style="margin-top:9px">'
+        + (!hasWeb ? '<button class="btn btn-p sm" onclick="addBfClient('+i+',event)">➕ Add Client</button>' : '')
+        + (phone   ? '<button class="btn btn-g sm" onclick="callBfBiz(\''+phone.replace(/['"]/g,'')+'\',event)">📞 Call</button>' : '')
+        + '<a class="btn btn-g sm" href="'+googleUrl+'" target="_blank" onclick="event.stopPropagation()">🔍 Google</a>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+function callBfBiz(phone, e){
+  e && e.stopPropagation();
+  window.location.href = 'tel:' + phone.replace(/\s+/g,'');
+}
+
+function addBfClient(idx, e){
+  e && e.stopPropagation();
+  var p = bfPlaces[idx]; if(!p) return;
+  var t    = p.tags;
+  var cat  = document.getElementById('bf-query').value.trim();
+  var addr = [t['addr:housenumber'], t['addr:street'], t['addr:city']].filter(Boolean).join(', ');
+  resetF();
+  document.getElementById('cn').value = t.name || '';
+  document.getElementById('cc').value = cat;
+  document.getElementById('cp').value = t.phone || t['contact:phone'] || '';
+  document.getElementById('cl').value = addr || document.getElementById('bf-loc').value;
+  editId = null;
+  document.getElementById('mct').textContent = '🏢 Add Client';
+  openM('mc');
+  toast((t.name||'Business') + ' pre-filled ✅','s');
+}
+
+function saveMapsKey(){ /* stub */ }
+function viewOnOSM(){ /* stub */ }
+
+// DOMAIN FINDER — WhoisXML API (real availability) + Hostinger India prices
+var domainApiKey = '';
+
+function saveApiKey(){
+  domainApiKey = document.getElementById('hgk').value.trim();
+  localStorage.setItem('nc_dak', domainApiKey);
+  var st = document.getElementById('hgst');
+  if(domainApiKey){
+    st.innerHTML = '<span class="hst ok">✅ Key saved</span>';
+  } else {
+    st.innerHTML = '';
+  }
+}
+
+// Your exact Hostinger prices
+var HPRICES = {
+  'com':    { price: 3362.22,  years: 3 },
+  'in':     { price: 2122.00,  years: 3 },
+  'co.in':  { price: 588.82,   years: 1 },
+  'net':    { price: 4943.42,  years: 3 },
+  'org':    { price: 3952.22,  years: 3 },
+  'io':     { price: 17318.86, years: 3 },
+  'site':   { price: 1606.38,  years: 3 },
+  'tech':   { price: 10361.98, years: 3 },
+  'xyz':    { price: 4188.22,  years: 3 },
+  'online': { price: 1606.38,  years: 3 }
+};
+var TLDS = ['com','in','co.in','net','org','io','site','tech','xyz','online'];
+
+async function checkOneDomain(fullDomain){
+  // WhoisJSON free API — correct endpoint + auth format from official docs
+  var key = domainApiKey;
+  if(!key){ return null; }
+  // Correct endpoint: /api/v1/domain-availability  Header: Token=KEY (not TOKEN=)
+  var url = 'https://whoisjson.com/api/v1/domain-availability?domain=' + encodeURIComponent(fullDomain);
+  try{
+    var r = await fetch(url, {
+      headers: {
+        'Authorization': 'Token=' + key,
+        'Accept': 'application/json'
+      }
+    });
+    if(r.status === 401 || r.status === 403){
+      document.getElementById('hgst').innerHTML = '<span class="hst err">❌ Invalid API key</span>';
+      return null;
+    }
+    if(!r.ok){ return null; }
+    var d = await r.json();
+    // Response: { "domain": "example.com", "available": true/false }
+    if(typeof d.available !== 'undefined') return d.available === true;
+    if(typeof d.registered !== 'undefined') return d.registered === false;
+    return null;
+  } catch(e){
+    return null;
+  }
+}
+
+async function searchDomain(){
+  var raw = document.getElementById('din').value.trim().toLowerCase().replace(/\s+/g,'-');
+  if(!raw){ toast('Enter a domain name','e'); return; }
+  // Strip any extension the user typed — we check all TLDs ourselves
+  var base = raw.replace(/\..*$/,'');
+  if(!base){ toast('Enter a domain name without extension','e'); return; }
+
+  var btn  = document.getElementById('dbtn');
+  var grid = document.getElementById('drg');
+  btn.innerHTML = '<span class="spin"></span> Checking…';
+  btn.disabled  = true;
+  grid.innerHTML = '<div style="padding:24px;color:var(--text3);font-size:13px;text-align:center"><div class="spin" style="margin:0 auto 12px"></div>Checking availability across all TLDs…</div>';
+
+  var hasKey = !!domainApiKey;
+  var results = [];
+
+  if(hasKey){
+    // Check all TLDs in parallel
+    var checks = TLDS.map(function(tld){
+      var full = base + '.' + tld;
+      var p = HPRICES[tld] || { price: 999, years: 1 };
+      return checkOneDomain(full).then(function(avail){
+        return { tld: tld, available: avail, price: p.price, years: p.years, live: true };
+      });
+    });
+    results = await Promise.all(checks);
+    // If all returned null (bad key / quota), fall to offline
+    var allNull = results.every(function(r){ return r.available === null; });
+    if(allNull){
+      document.getElementById('hgst').innerHTML = '<span class="hst err">❌ API key invalid or quota exceeded</span>';
+      results = offlinePrices(base);
+    } else {
+      document.getElementById('hgst').innerHTML = '<span class="hst ok">✅ Live results</span>';
+    }
+  } else {
+    // No key — show offline prices with note
+    results = offlinePrices(base);
+  }
+
+  renderDomR(base, results, grid, hasKey);
+  btn.innerHTML = '🔍 Check Availability';
+  btn.disabled  = false;
+  document.getElementById('dacr').style.display = 'flex';
+}
+
+function offlinePrices(base){
+  return TLDS.map(function(tld){
+    var p = HPRICES[tld] || { price: 999, years: 1 };
+    return { tld: tld, available: null, price: p.price, years: p.years, live: false };
+  });
+}
+function fallbackPrices(base){ return hostingerOfflinePrices(base); }
+function renderDomR(base, results, grid, hasKey){
+  if(!results || !results.length){
+    grid.innerHTML = '<p style="color:var(--text3);font-size:13px;padding:8px">No results.</p>';
+    return;
+  }
+  var noKeyNote = !hasKey
+    ? '<div style="background:rgba(255,165,2,0.08);border:1px solid rgba(255,165,2,0.25);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:var(--orange)">⚠️ <strong>No API key</strong> — prices shown but availability not checked. Get a free WhoisXML key above.</div>'
+    : '';
+  var rows = results.map(function(r){
+    var isAvail   = r.available === true;
+    var isUnknown = r.available === null;
+    var isTaken   = r.available === false;
+    var yrsLabel  = r.years === 1 ? '1 year' : r.years + ' years';
+    var statusHtml = isUnknown
+      ? '<span style="font-size:11px;color:var(--text3)">availability not checked</span>'
+      : (isAvail
+        ? '<span class="dok">✅ Available</span>'
+        : '<span class="dno">❌ Already Taken</span>');
+    var addBtn = (isAvail || isUnknown)
+      ? '<button class="btn btn-g sm" style="margin-top:6px;font-size:11px" onclick="selDP('+r.price+')">+ Add ₹'+fmt(r.price)+' to Client</button>'
+      : '';
+    var cardCls = 'dc ' + (isAvail ? 'av' : (isTaken ? 'tk' : ''));
+    return '<div class="' + cardCls + '">'
+      + '<div>'
+        + '<div class="de">' + esc(base) + '<span style="color:var(--accent)">.' + r.tld + '</span></div>'
+        + statusHtml
+      + '</div>'
+      + '<div style="text-align:right">'
+        + '<div class="dp">₹' + fmt(r.price) + '</div>'
+        + '<div style="font-size:10px;color:var(--text3);margin-top:2px">for ' + yrsLabel + ' · Hostinger</div>'
+        + addBtn
+      + '</div>'
+    + '</div>';
+  });
+  grid.innerHTML = noKeyNote + rows.join('');
+}
+function selDP(p){document.getElementById('dcv').value=p;toast('₹'+fmt(p)+' selected','i');}
+function fillDCS(){const s=document.getElementById('dcs');if(!s)return;s.innerHTML='<option value="">Select client…</option>'+clients.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');}
+async function addDomCost(){
+  const id=document.getElementById('dcs').value;const cost=parseFloat(document.getElementById('dcv').value);
+  if(!id){toast('Select a client','e');return;}if(!cost){toast('Enter a cost','e');return;}
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  c.expense=(c.expense||0)+cost;c.profit=(c.finalPrice||c.price)-c.expense;c.updatedAt=Date.now();
+  await dbS('clients',c);if(!db)sl();log('🌐','Domain ₹'+fmt(cost)+' → '+c.name,'Domain');toast('₹'+fmt(cost)+' added to '+c.name+' ✅','s');renderAll();
+}
+
+// AI SCRIPT
+async function genScript(){
+  const biz=document.getElementById('sb').value.trim();const cat=document.getElementById('sc2').value.trim();
+  const loc=document.getElementById('sloc').value.trim();const you=document.getElementById('syou').value.trim()||'Nexa Cloud';
+  const bud=document.getElementById('sbud').value.trim();const tone=document.getElementById('stone').value;const lang=document.getElementById('slang').value;
+  if(!biz||!cat){toast('Enter business name & category','e');return;}
+  const out=document.getElementById('sout');
+  out.innerHTML=`<div style="display:flex;align-items:center;gap:12px;padding:22px;color:var(--text2)"><div class="spin"></div> Generating personalised script…</div>`;
+  const tg={friendly:'Be warm, helpful, conversational like a friend giving advice.',professional:'Be polished, confident, business-like.',urgent:'Create urgency — competitors are going online, they are losing customers every day.'};
+  const prompt=`You are a sales call script writer for "${you}", a web design company in India that builds websites for local businesses.
+
+Write a DETAILED and REALISTIC cold call script for calling a ${cat} named "${biz}"${loc?` in ${loc}`:''}${bud?`. Their budget range: ${bud}`:''}. 
+
+Tone: ${tg[tone]||tg.friendly}
+Language: ${lang==='hinglish'?'Hinglish — natural mix of Hindi and English exactly how Indian salespeople talk':(lang==='hindi'?'Hindi':(lang==='bengali'?'Bengali mixed with English tech words':'Indian English, not overly formal'))}
+
+The script MUST include ALL of these:
+1. Opening — greeting and brief intro
+2. Permission ask — "kya 1 minute hai?"
+3. Hook — they don't have a website
+4. Value — what a site specifically does for a ${cat} (local SEO, customer trust, bookings)
+5. Objection: "Kitna kharcha / Too expensive?" — handle with value reframe
+6. Objection: "Social media hai mera (Instagram/Facebook)" — explain why website > social alone
+7. Objection: "Sochna hai / Need to think" — gentle push
+8. Objection: "Owner nahi hai / Busy hoon" — ask for callback time
+9. Competitor angle — "aapke competitors already have websites"
+10. Call to action — ask for 10-min demo or WhatsApp connect
+11. Callback confirm — if they defer, confirm exact date and time
+
+Format as a JSON array ONLY, no markdown, no preamble:
+[{"speaker":"YOU"|"THEM"|"TIP","line":"...","note":"optional coaching hint"}]
+
+TIP = coaching note for the caller (shown separately). Make at least 16 lines. Make it sound REAL — not salesy robot talk.`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1800,messages:[{role:"user",content:prompt}]})});
+    const data=await res.json();
+    const txt=data.content?.filter(x=>x.type==='text').map(x=>x.text).join('')||'';
+    let lines;try{lines=JSON.parse(txt.replace(/```json|```/g,'').trim());}catch(e){lines=fbScript(biz,cat,you,lang);}
+    renderScript(lines,biz,out);toast('Script ready 🎉','s');
+  }catch(e){renderScript(fbScript(biz,cat,you,lang),biz,out);toast('Script ready (offline)','i');}
+}
+function fbScript(biz,cat,you,lang){
+  const H=lang==='hinglish';
+  return[
+    {speaker:'TIP',line:'Before calling: check Google Maps to confirm they have no website link.'},
+    {speaker:'YOU',line:H?`Hello! Kya main ${biz} se baat kar sakta hoon?`:`Hello! Am I speaking with someone from ${biz}?`},
+    {speaker:'THEM',line:H?'Haan bolo, kaun hai?':'Yes, who is this?'},
+    {speaker:'YOU',line:H?`Namaskar! Main ${you} se bol raha hoon — hum local businesses ke liye professional websites banate hain. Kya aapke paas 1 minute hai?`:`Hi! I'm calling from ${you}. We help local businesses like yours get their first professional website. Do you have just 1 minute?`,note:'Ask permission — it shows respect'},
+    {speaker:'THEM',line:H?'Haan, bolo quickly.':'Yes, go ahead quickly.'},
+    {speaker:'YOU',line:H?`Maine notice kiya ki ${biz} ka abhi website nahi hai. Aajkal 80% log kisi bhi ${cat} ko visit karne se pehle Google pe search karte hain — aur jo website pe nahi hain unhe customers miss ho rahe hain.`:`I noticed ${biz} doesn't have a website yet. These days, 80% of people search Google before visiting any ${cat} — if you're not showing up, those customers are going to your competitors instead.`},
+    {speaker:'TIP',line:'Pause here — let the point land. Don\'t rush to fill the silence.'},
+    {speaker:'THEM',line:H?'Hmm… kitna kharcha hoga?':'How much would it cost?'},
+    {speaker:'YOU',line:H?`Yeh depend karta hai aapki requirements pe — but we start from ₹3,000 only. Ek baar hum 10 minute baat karein, main aapke ${cat} ke liye exact plan suggest karunga.`:`It depends on your needs — we start from just ₹3,000. Can we do a quick 10-minute call where I show you what other ${cat} businesses are doing with their websites?`,note:'Don\'t quote a full price yet — qualify first'},
+    {speaker:'THEM',line:H?'Mera toh Instagram page hai — ussi se chalata hoon.':'I already manage through Instagram.'},
+    {speaker:'YOU',line:H?`Instagram bahut achha hai, lekin woh Google pe show nahi hota. Jab koi "${cat} near me" ya "${cat} in ${lang==='hinglish'?'aapka area':'your area'}" search karta hai — tab sirf website wale results aate hain. Instagram wale nahi.`:`Instagram is great, but it doesn't appear on Google Search. When someone types "${cat} near me" — only websites show up on the first page. Instagram profiles don't rank there.`,note:'This objection is very common — practice this reply until it\'s natural'},
+    {speaker:'THEM',line:H?'Thoda sochna padega.':'I need to think about it.'},
+    {speaker:'YOU',line:H?`Bilkul — main samajh sakta hoon. Kya main aapko ek quick WhatsApp message bhej sakta hoon with examples? Agar pasand aaya toh hum aage baat karte hain — koi pressure nahi.`:`Absolutely, I understand. Can I send you a quick WhatsApp message with some examples? If you like what you see, we talk further — no pressure at all.`,note:'Low-pressure close — gets a soft yes'},
+    {speaker:'THEM',line:H?'Owner abhi available nahi hai.':'The owner isn\'t available right now.'},
+    {speaker:'YOU',line:H?`No problem! Kab aaenge? Kal subah 10 baje ya phir shaam 4 baje call karun? Main aapki timing pe call karunga.`:`No problem at all! When would be a good time to call back — tomorrow at 10 AM, or perhaps around 4 PM? I'll call whenever suits you.`,note:'Always offer TWO specific times — makes it easy to say yes. Log the callback in the app NOW!'},
+    {speaker:'TIP',line:'If they give any time → immediately schedule a callback in the app before hanging up!'},
+    {speaker:'YOU',line:H?`Theek hai, main kal [time] pe call karunga. Aapka naam kya hai sir/madam?`:`Perfect, I'll call at [time]. May I know your name? And can I confirm the best number to reach you on?`,note:'Always confirm contact name — makes the next call warmer'},
+  ];
+}
+function renderScript(lines,biz,container){
+  container.innerHTML=`<div class="scard">
+    <div class="shd"><span class="shtit">📞 Call Script — ${esc(biz)}</span><span style="color:rgba(255,255,255,.55);font-size:11px">${lines.filter(l=>l.speaker!=='TIP').length} lines</span></div>
+    <div class="sbody">${lines.map(l=>{const spk=l.speaker==='YOU'?'y':l.speaker==='TIP'?'tip':'t';return`<div class="sline"><div class="spk ${spk}">${l.speaker==='TIP'?'💡 TIP':l.speaker}</div><div style="flex:1"><div class="sl-txt">${esc(l.line||'')}</div>${l.note?`<div class="snote">→ ${esc(l.note)}</div>`:''}</div></div>`;}).join('')}</div>
+  </div>
+  <div class="sacts">
+    <button class="btn btn-g sm" onclick="copyScript()">📋 Copy Script</button>
+    <button class="btn btn-g sm" onclick="openCbM()">📞 Schedule Callback</button>
+  </div>`;
+}
+
+function dialClient(id){
+  var c = clients.find(function(x){ return x.id === id; });
+  if(!c || !c.phone){ toast('No phone number for this client','e'); return; }
+  var phone = c.phone.replace(/\s+/g,'');
+  // tel: opens phone app on mobile, or default calling app on desktop
+  window.location.href = 'tel:' + phone;
+  // Also log the call attempt
+  log('📞', 'Calling ' + c.name, c.phone);
+  toast('Opening dialer for ' + c.phone,'i');
+}
+
+function qScript(id){const c=clients.find(x=>x.id===id);if(!c)return;document.getElementById('sb').value=c.name;document.getElementById('sc2').value=c.category||'';document.getElementById('sloc').value=c.location||'';go('script');genScript();}
+function copyScript(){const ls=[...document.querySelectorAll('.sline')];const t=ls.map(l=>(l.querySelector('.spk')?.textContent||'')+': '+(l.querySelector('.sl-txt')?.textContent||'')).join('\n');navigator.clipboard.writeText(t).then(()=>toast('Copied!','s'));}
+
+// DASHBOARD
+function renderDash(){
+  const tot=clients.length,sold=clients.filter(c=>c.status==='sold').length,pend=clients.filter(c=>c.status==='pending').length,cbc=callbacks.filter(c=>!c.done).length;
+  document.getElementById('ds0').textContent=tot;document.getElementById('ds1').textContent=sold;document.getElementById('ds2').textContent=pend;document.getElementById('ds3').textContent=cbc;
+  if(tot>0){document.getElementById('ds1s').textContent=Math.round(sold/tot*100)+'% conversion';document.getElementById('ds2s').textContent=pend+' awaiting';}
+  const feed=document.getElementById('act-feed');
+  if(!activities.length){feed.innerHTML=`<div class="empty"><div class="eico">📭</div><h3>No activity yet</h3><p>Add your first client</p></div>`;}
+  else feed.innerHTML=[...activities].reverse().slice(0,12).map(a=>`<div class="ai"><div class="aico" style="background:rgba(14,165,233,.08)">${a.icon}</div><div><div class="atit">${esc(a.title)}</div><div class="amet">${esc(a.sub)} · ${ago(a.ts)}</div></div></div>`).join('');
+  updateSb();
+}
+function updateSb(){const cu=appS.currency;const s=clients.filter(c=>c.status==='sold');const r=s.reduce((x,c)=>x+(c.finalPrice||c.price||0),0);const p=s.reduce((x,c)=>x+(c.profit||0),0);document.getElementById('sbr').textContent=cu+fmt(r);document.getElementById('sbp').textContent=cu+fmt(p);}
+function updateBadges(){const p=clients.filter(c=>c.status==='pending').length;const cb=callbacks.filter(c=>!c.done).length;const n1=document.getElementById('nb1');const n2=document.getElementById('nb2');n1.textContent=p;n1.style.display=p?'':'none';n2.textContent=cb;n2.style.display=cb?'':'none';}
+function renderAll(){renderDash();renderClients();renderCbs();updateBadges();fillDCS();}
+
+// FIREBASE
+function initFb(cfg){try{if(firebase.apps.length){firebase.app().delete().then(()=>{firebase.initializeApp(cfg);db=firebase.firestore();loadFb();});}else{firebase.initializeApp(cfg);db=firebase.firestore();loadFb();}toast('🔥 Firebase connected!','s');document.getElementById('fbst').innerHTML='<span style="color:var(--green)">✅ Connected</span>';}catch(e){toast('Firebase error: '+e.message,'e');}}
+async function loadFb(){try{const[cs,cbs]=await Promise.all([db.collection('clients').get(),db.collection('callbacks').get()]);clients=cs.docs.map(d=>({id:d.id,...d.data()}));callbacks=cbs.docs.map(d=>({id:d.id,...d.data()}));localStorage.setItem('nc_fb_connected','1');sl();renderAll();toast('Data loaded ✅','s');}catch(e){console.error(e);}}
+async function dbS(col,doc){if(!db)return null;try{if(doc.id){await db.collection(col).doc(doc.id).set(doc);return doc.id;}else{const r=await db.collection(col).add(doc);return r.id;}}catch(e){return null;}}
+async function dbD(col,id){if(!db)return;try{await db.collection(col).doc(id).delete();}catch(e){}}
+
+// LOCAL
+function sl(){localStorage.setItem('nc_c',JSON.stringify(clients));localStorage.setItem('nc_cb',JSON.stringify(callbacks));}
+function ll(){const c=localStorage.getItem('nc_c');const cb=localStorage.getItem('nc_cb');const ac=localStorage.getItem('nc_ac');if(c)clients=JSON.parse(c);if(cb)callbacks=JSON.parse(cb);if(ac)activities=JSON.parse(ac);}
+
+// SETTINGS
+function saveFb(){try{const cfg=JSON.parse(document.getElementById('fbcfg').value.trim());localStorage.setItem('nc_fb',JSON.stringify(cfg));localStorage.setItem('nc_fb_connected','1');localStorage.removeItem('nc_c');localStorage.removeItem('nc_cb');clients=[];callbacks=[];initFb(cfg);}catch(e){toast('Invalid JSON','e');}}
+function saveSettings(){appS.name=document.getElementById('stn').value||'';appS.currency=document.getElementById('stc').value||'₹';localStorage.setItem('nc_s',JSON.stringify(appS));toast('Saved ✅','s');renderAll();}
+
+// UTILS
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function ago(ts){const d=Date.now()-ts;if(d<60000)return 'just now';if(d<3600000)return Math.floor(d/60000)+'m ago';if(d<86400000)return Math.floor(d/3600000)+'h ago';return Math.floor(d/86400000)+'d ago';}
+function log(icon,title,sub){activities.push({icon,title,sub,ts:Date.now()});if(activities.length>60)activities.shift();localStorage.setItem('nc_ac',JSON.stringify(activities));}
+function toast(msg,type='i'){const w=document.getElementById('twrap');const icons={s:'✅',e:'❌',i:'ℹ️'};const el=document.createElement('div');el.className='toast '+type;el.innerHTML=`<span>${icons[type]}</span>${msg}`;w.appendChild(el);setTimeout(()=>el.remove(),3000);}
+
+// INIT
+function init(){
+  theme=localStorage.getItem('nc_theme')||'dark';
+  document.documentElement.setAttribute('data-theme',theme);
+  document.getElementById('tbtn').textContent=theme==='dark'?'☀️':'🌙';
+  ll();
+  const s=localStorage.getItem('nc_s');if(s){appS={...appS,...JSON.parse(s)};}
+  document.getElementById('stn').value=appS.name;document.getElementById('stc').value=appS.currency;
+  domainApiKey=localStorage.getItem('nc_dak')||'';document.getElementById('hgk')&&(document.getElementById('hgk').value=domainApiKey);mapsApiKey=localStorage.getItem('nc_gmk')||'';document.getElementById('bf-apikey')&&(document.getElementById('bf-apikey').value=mapsApiKey);
+  if(hgKey){document.getElementById('hgk').value=hgKey;document.getElementById('hgst').innerHTML='<span class="hst ok">✅ Saved</span>';}
+  const fb=localStorage.getItem('nc_fb');if(fb){try{initFb(JSON.parse(fb));document.getElementById('fbcfg').value=JSON.stringify(JSON.parse(fb),null,2);}catch(e){}}
+  // Only inject demo data if: no Firebase configured AND never connected to Firebase before AND no local data
+  const fbConnected = localStorage.getItem('nc_fb_connected');
+  const hasFbConfig  = !!localStorage.getItem('nc_fb');
+  if(!clients.length && !fbConnected && !hasFbConfig){
+    clients=[
+      {id:'d1',name:'Raj Beauty Salon',category:'Beauty Salon',phone:'+91 9876543210',location:'Kolkata',expense:549,price:5999,finalPrice:4999,status:'sold',notes:'Very interested, quick decision',profit:4450,createdAt:Date.now()-172800000,updatedAt:Date.now()-172800000},
+      {id:'d2',name:'Mumbai Dhaba',category:'Restaurant',phone:'+91 9123456789',location:'Mumbai',expense:799,price:6999,finalPrice:0,status:'pending',notes:'Call back Friday afternoon',profit:-799,createdAt:Date.now()-86400000,updatedAt:Date.now()-86400000},
+      {id:'d3',name:'FitZone Gym',category:'Fitness Center',phone:'+91 9988776655',location:'Delhi',expense:499,price:8999,finalPrice:7499,status:'callback',notes:'Owner was at training session',profit:7000,createdAt:Date.now()-43200000,updatedAt:Date.now()-43200000},
+      {id:'d4',name:'Sharma Electronics',category:'Electronics Shop',phone:'+91 9555444333',location:'Pune',expense:799,price:4999,finalPrice:0,status:'declined',notes:'Nephew building site already',profit:-799,createdAt:Date.now()-21600000,updatedAt:Date.now()-21600000},
+    ];
+    callbacks=[
+      {id:'cb1',clientId:'d2',businessName:'Mumbai Dhaba',phone:'+91 9123456789',date:new Date().toISOString().split('T')[0],time:'15:00',note:'Owner busy during lunch rush — call at 3pm',priority:'high',done:false,createdAt:Date.now()},
+      {id:'cb2',clientId:'d3',businessName:'FitZone Gym',phone:'+91 9988776655',date:new Date(Date.now()+86400000).toISOString().split('T')[0],time:'10:30',note:'Call after morning batch ends',priority:'normal',done:false,createdAt:Date.now()},
+    ];
+    activities=[
+      {icon:'🏢',title:'Added Raj Beauty Salon',sub:'Beauty Salon',ts:Date.now()-172800000},
+      {icon:'💰',title:'Raj Beauty Salon → Sold',sub:'Deal: ₹4,999',ts:Date.now()-168000000},
+      {icon:'🏢',title:'Added Mumbai Dhaba',sub:'Restaurant',ts:Date.now()-86400000},
+      {icon:'📞',title:'Callback for Mumbai Dhaba',sub:'Today 3pm — HIGH priority',ts:Date.now()-3600000},
+    ];
+  }
+  renderAll();
+}
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
